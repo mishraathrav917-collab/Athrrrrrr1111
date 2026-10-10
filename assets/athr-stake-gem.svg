@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="0 0 240 210">
+  <!-- Generator: Adobe Illustrator 30.7.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 114)  -->
+  <defs>
+    <style>
+      .st0 {
+        fill: #203743;
+      }
+
+      .st1 {
+        fill: #00ba01;
+      }
+
+      .st2 {
+        fill: #02a10c;
+      }
+
+      .st3 {
+        fill: url(#linear-gradient);
+      }
+
+      .st4 {
+        fill: #57fd7f;
+      }
+
+      .st5 {
+        fill: #00d503;
+      }
+
+      .st6 {
+        fill: #09fd02;
+      }
+
+      .st7 {
+        fill: #cafec6;
+      }
+
+      .st8 {
+        fill: #c3fdd1;
+      }
+
+      .st9 {
+        fill: #00e701;
+      }
+
+      .st11 {
+        fill: #00c701;
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="120.4" y1="83.5" x2="209.8" y2="83.5" gradientTransform="translate(0 211.9) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#aed500"/>
+      <stop offset="1" stop-color="#00d503"/>
+    </linearGradient>
+  </defs>
+  <g id="Layer_1">
+    <g>
+      <g id="sticker_x5F_back">
+        <path class="st0" d="M119.8,195.1c-6,0-11.7-2.7-15.6-7.2L19.9,89.8c-6.9-7.8-6.6-19.8.6-27.3l30-32.4c3.9-4.2,9.3-7.2,15.3-8.1l42-6.3c8.1-1.2,16.2-1.2,24.3,0l42,6.3c5.7.9,11.4,3.6,15.3,8.1l30.3,32.4c7.2,7.8,7.2,19.5.6,27.3l-84.3,98.1c-3.9,4.5-9.6,7.2-15.6,7.2h-.6ZM197.2,83h0Z"/>
+      </g>
+      <g id="left">
+        <path class="st11" d="M29.8,76.4h0c0,.9.3,1.2.9,1.5l46.8,15.9,39.6,84.9c.3.6,1.2,1.2,1.8,1.5-1.2,0-2.7-.9-3.6-1.8l-1.8-2.1L31,80.2c-.9-.9-1.5-2.1-1.5-3.9h.3Z"/>
+      </g>
+      <g id="front">
+        <path class="st1" d="M72.4,98.8l45,80.1c1.2,1.8,3.9,1.8,4.8,0l42.3-71.4,2.7-8.7s-94.8,0-94.8,0Z"/>
+      </g>
+      <g id="right">
+        <path class="st3" d="M209.8,76.4h0c0,.9-.3,1.2-.9,1.5l-41.7,21-45,80.1c-.3.6-1.2,1.2-1.8,1.5,1.2,0,2.7-.9,3.6-1.8l1.8-2.1,82.5-95.7c.9-.9,1.5-2.1,1.5-3.9v-.6Z"/>
+      </g>
+      <g id="right_x5F_top">
+        <path class="st4" d="M208.3,72.7l-30.3-32.4c-1.8-1.8-3.9-3-6.6-3.3l-5.7-.9c-.6,1.2,6.6,19.2,6.6,19.2l36.3,19.8c.6,0,.9.9.9,1.2h0c0-1.2-.6-2.4-1.5-3.6h.3Z"/>
+      </g>
+      <g id="left_x5F_top">
+        <path class="st8" d="M73.9,36.2l-5.7.9c-2.4.3-4.8,1.5-6.6,3.3l-30.3,32.4c-.9.9-1.5,2.1-1.5,3.6h0c0-.6,0-.9.9-1.2l36.3-19.8s6-13.5,6.9-19.2Z"/>
+      </g>
+      <g id="left_x5F_highlight">
+        <path class="st9" d="M72.4,98.8l-41.7-21c-1.2-.6-1.2-2.4,0-3l36.3-19.8,5.7,43.5-.3.3Z"/>
+      </g>
+      <g id="right_x5F_small">
+        <polygon class="st9" points="119.8 65.2 146.2 92.2 167.2 98.8 173.8 70.4 172.6 55.4 134.8 55.7 119.8 65.2"/>
+      </g>
+      <g id="right_x5F_highlight">
+        <path class="st7" d="M167.2,98.8l41.7-21c1.2-.6,1.2-2.4,0-3l-36.3-19.8-5.7,43.5.3.3Z"/>
+      </g>
+      <g id="middle">
+        <polygon class="st2" points="119.8 65.2 96.4 78.5 72.4 98.8 167.2 98.8 119.8 65.2"/>
+      </g>
+      <g id="left_x5F_small">
+        <polygon class="st5" points="119.8 65.2 72.4 98.8 67 55.4 119.8 65.2"/>
+      </g>
+      <g id="top">
+        <path class="st6" d="M114.7,29.9l-45.3,6.9c-3,.6-5.1,3.3-4.8,6.3l1.8,12.3,52.8,9.9,52.8-9.9,1.8-12.3c.6-3-1.5-6-4.8-6.3l-45.3-6.9c-3.3-.6-6.6-.6-9.9,0h.9Z"/>
+      </g>
+    </g>
+  </g>
+</svg>

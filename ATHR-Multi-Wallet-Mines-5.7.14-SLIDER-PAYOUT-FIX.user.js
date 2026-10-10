@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         ATHR Multi-Wallet Mines
 // @namespace    http://tampermonkey.net/
-// @version      5.7.14
-// @description  ATHR 5.7.14 local/demo: current 1-24 mines slider support, frozen round mines count, no guessed 24.75 payout; prior fixes retained. Gem/bomb artwork replacement still pending actual assets.
+// @version      5.8.0
+// @description  ATHR 5.8.0 local/demo: current Mines slider selectors, frozen round mines count, supplied Stake gem/bomb artwork and reveal motion; betting logic unchanged.
 // @author       $ librarian
 // @match        *://*.stake.ac/*
 // @match        *://*.stake.games/*
@@ -32,6 +32,8 @@
 // @resource     athrSound6 https://www.genspark.ai/api/files/s/LHZyWV2i
 // @resource     athrSound7 https://www.genspark.ai/api/files/s/ywYctrqK
 // @resource     athrSound8 https://www.genspark.ai/api/files/s/KE3hyrEu
+// @resource     athrStakeGemSvg https://raw.githubusercontent.com/mishraathrav917-collab/Athrrrrrr1111/main/assets/athr-stake-gem.svg
+// @resource     athrStakeMineSvg https://raw.githubusercontent.com/mishraathrav917-collab/Athrrrrrr1111/main/assets/athr-stake-mine.svg
 // @connect      api.coingecko.com
 // @connect      secverhub-net6vw7l.manus.space
 // @run-at       document-start
@@ -1922,7 +1924,7 @@
     const WRAPPER_SELECTOR = '.input-wrap';
     const INPUT_SELECTOR = 'input[data-testid="input-game-amount"]';
     const FAKE_INPUT_SELECTOR = '#fake-bet-input';
-    const SELECT_SELECTOR = 'select[data-testid="mines-count"], input[type="range"][min="1"][max="24"][step="1"]';
+    const SELECT_SELECTOR = '[data-testid="mines-count-control"] input[type="range"], [data-testid="mines-count-slider"] input[type="range"], select[data-testid="mines-count"], input[type="range"][min="1"][max="24"][step="1"]';
     const BET_BUTTON_SELECTOR = 'button[data-testid="bet-button"]';
     const CONVERSION_SPAN_SELECTOR = 'div[data-testid="conversion-amount"]';
     const INNER_CONVERSION_SPAN_SELECTOR = 'div[data-testid="conversion-amount"] span[data-ds-text="true"]';
@@ -4628,8 +4630,18 @@
     function handleATHRWiringEvent(event) {
         const target = event.target?.nodeType === 1 ? event.target : event.target?.parentElement;
         if (!target || target.closest?.('#balance-ui')) return;
+        if (event.type === 'click') {
+            const clickedTile = target.closest?.('button[data-testid^="game-tile-"], button.tile');
+            if (clickedTile) {
+                handleATHRTileWiggleClick(event, clickedTile);
+                return;
+            }
+        }
         const action = target.closest?.('button, [role="button"], [role="option"], label, [role="radio"], [role="switch"], input');
         if (!action) return;
+        if (event.type === 'click' && action.matches?.('button[data-testid="bet-button"]')) {
+            resetATHRTileWiggleState();
+        }
 
         const nativeChoice = action.closest?.('button, [role="button"], [role="option"]');
         if (nativeChoice && isNativeCurrencyChoice(nativeChoice)) {
@@ -16176,8 +16188,9 @@
         scheduleATHRWiringSync('balance-monitor-install', 220);
     }
 
-    // 5.7.14: captured main control is an unnamed range input (1..24, step1),
-    // not select[data-testid=mines-count]. Never infer mines from popup tiles.
+    // Current Stake capture: range input lives below mines-count-control inside
+    // mines-count-slider. Keep the generic 1..24 and old select fallbacks.
+    // Never infer the selected count from popup tiles.
     function getATHRMinesControl() {
         try {
             const controls = Array.from(document.querySelectorAll(SELECT_SELECTOR)).filter(control => {
@@ -16192,11 +16205,31 @@
 
     function readATHRMinesControlCount() {
         const control = getATHRMinesControl();
-        if (!control) return null;
-        const raw = String(control.value).trim();
-        if (!/^\d+$/.test(raw)) return null;
-        const value = Number(raw);
-        return Number.isInteger(value) && value >= 1 && value <= 24 ? value : null;
+        const raw = String(control?.value ?? '').trim();
+        if (/^\d+$/.test(raw)) {
+            const value = Number(raw);
+            if (Number.isInteger(value) && value >= 1 && value <= 24) return value;
+        }
+
+        // Some page snapshots omit the range's live value but keep the visible
+        // count in this stable test ID. Accept it only when exactly one label
+        // is visible outside dialogs/previews.
+        try {
+            const labels = Array.from(document.querySelectorAll(
+                '[data-testid="mines-count-control"] [data-testid="mines-count-mines"]'
+            )).filter(label => {
+                if (label.closest('#balance-ui, [role="dialog"], [aria-modal="true"], [data-modal-card="true"], [data-testid="mines-bet-preview"]')) return false;
+                const css = getComputedStyle(label);
+                return css.display !== 'none' && css.visibility !== 'hidden' && label.getClientRects().length > 0;
+            });
+            if (labels.length !== 1) return null;
+            const labelValue = (labels[0].textContent || '').trim();
+            if (!/^\d+$/.test(labelValue)) return null;
+            const value = Number(labelValue);
+            return Number.isInteger(value) && value >= 1 && value <= 24 ? value : null;
+        } catch (_) {
+            return null;
+        }
     }
 
     function getSelectedMinesCount() {
@@ -16460,6 +16493,93 @@
         return tiles.slice(0, 25);
     }
 
+    let athrTileWiggleState = { grid: null, roundId: null, minesCount: null, clicks: 0, fired: false };
+
+    function resetATHRTileWiggleState() {
+        athrTileWiggleState = { grid: null, roundId: null, minesCount: null, clicks: 0, fired: false };
+    }
+
+    function triggerATHRTileWiggle(tile) {
+        const layer = tile?.querySelector?.('[data-testid="tile-wiggle-layer"], .wiggle-layer');
+        if (!layer) return false;
+
+        ensureATHRStakeArtworkStyles();
+        const properties = [
+            ['--wiggle-angle', '0.315deg'],
+            ['--wiggle-distance', '0.4px'],
+            ['--wiggle-lift', '0.25px'],
+            ['--wiggle-drop', '0.1625px'],
+            ['--wiggle-duration', '226ms'],
+            ['--wiggle-delay', '-66ms']
+        ];
+        const previous = properties.map(([name]) => [
+            name,
+            tile.style.getPropertyValue(name),
+            tile.style.getPropertyPriority(name)
+        ]);
+        for (const [name, value] of properties) tile.style.setProperty(name, value);
+
+        layer.classList.remove('wiggling', 'athr-wiggle-once');
+        void layer.offsetWidth;
+        layer.classList.add('wiggling', 'athr-wiggle-once');
+
+        let timer = 0;
+        let cleaned = false;
+        const cleanup = () => {
+            if (cleaned) return;
+            cleaned = true;
+            if (timer) clearTimeout(timer);
+            layer.classList.remove('wiggling', 'athr-wiggle-once');
+            for (const [name, value, priority] of previous) {
+                if (value) tile.style.setProperty(name, value, priority);
+                else tile.style.removeProperty(name);
+            }
+        };
+        layer.addEventListener('animationend', cleanup, { once: true });
+        timer = setTimeout(cleanup, 500);
+        return true;
+    }
+
+    function handleATHRTileWiggleClick(event, tile) {
+        if (!event?.isTrusted || !tile || tile.disabled || tile.getAttribute('data-revealed') === 'true') return;
+        const grid = getATHRMainGrid();
+        if (!grid || !grid.contains(tile) || tile.closest('[role="dialog"], [aria-modal="true"], .modal')) return;
+        const board = tile.closest('[data-testid="game-mines-board"]');
+        if (board !== grid) return;
+        const status = tile.getAttribute('data-game-tile-status');
+        if (status ? status !== 'idle' : !tile.classList.contains('idle')) return;
+
+        const minesCount = getSelectedMinesCount();
+        if (!Number.isInteger(minesCount) || minesCount < 1 || minesCount > 23) {
+            if (minesCount === 24) resetATHRTileWiggleState();
+            return;
+        }
+
+        const roundId = activeBetSession?.id || null;
+        if (athrTileWiggleState.grid !== grid
+            || athrTileWiggleState.roundId !== roundId
+            || athrTileWiggleState.minesCount !== minesCount) {
+            athrTileWiggleState = { grid, roundId, minesCount, clicks: 0, fired: false };
+        }
+        if (athrTileWiggleState.fired) return;
+
+        athrTileWiggleState.clicks += 1;
+        // 1-2 mines: 10 clicks; 3-4: 9; continuing down by one per two
+        // mines. Clamp 21-23 mines to the first click; 24 is excluded above.
+        const threshold = Math.max(1, 11 - Math.ceil(minesCount / 2));
+        if (athrTileWiggleState.clicks < threshold) return;
+        athrTileWiggleState.fired = true;
+
+        const idleTiles = getATHRMainGridTiles().filter(candidate => {
+            if (candidate === tile || candidate.disabled || candidate.getAttribute('data-revealed') === 'true') return false;
+            const candidateStatus = candidate.getAttribute('data-game-tile-status');
+            return candidateStatus ? candidateStatus === 'idle' : candidate.classList.contains('idle');
+        });
+        if (!idleTiles.length) return;
+        const target = idleTiles[Math.floor(Math.random() * idleTiles.length)];
+        triggerATHRTileWiggle(target);
+    }
+
     let athrBetGridLoading = false;
     let athrBetGridLoadTimer = null;
     let athrBetLoadingGrid = null;
@@ -16543,24 +16663,131 @@
         return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
     }
 
+    function getATHRArtworkResourceURL(name) {
+        try {
+            return typeof GM_getResourceURL === 'function' ? (GM_getResourceURL(name) || '') : '';
+        } catch (_) {
+            return '';
+        }
+    }
+
+    function ensureATHRStakeArtworkStyles() {
+        try {
+            if (document.getElementById('athr-stake-artwork-styles')) return;
+            const style = document.createElement('style');
+            style.id = 'athr-stake-artwork-styles';
+            style.textContent = `
+                @keyframes athr-stake-art-scale-up {
+                    0% { opacity: 0; transform: scale(.4); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+                @keyframes athr-stake-cover-reveal {
+                    0% { opacity: 1; transform: scale(1); }
+                    100% { opacity: 0; transform: scale(.72); }
+                }
+                .athr-supplied-gem, .athr-supplied-mine {
+                    position: absolute;
+                    inset: 0;
+                    display: block;
+                    pointer-events: none;
+                }
+                .athr-supplied-artwork-wrap {
+                    position: absolute;
+                    inset: 8%;
+                    animation: athr-stake-art-scale-up 220ms cubic-bezier(.22, 1, .36, 1) both;
+                }
+                .athr-supplied-mine .athr-supplied-artwork-wrap {
+                    inset: 0;
+                    animation-duration: var(--mine-reveal-duration, 220ms);
+                }
+                img.athr-supplied-artwork {
+                    position: absolute;
+                    inset: 0;
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    object-fit: contain;
+                    user-select: none;
+                    -webkit-user-drag: none;
+                }
+                .athr-supplied-cover {
+                    position: absolute;
+                    inset: 0;
+                    border-radius: var(--edge-radius-md, 8px);
+                    opacity: 0;
+                    pointer-events: none;
+                    animation: athr-stake-cover-reveal var(--reveal-duration, 160ms) cubic-bezier(.4, 0, 1, 1) forwards;
+                }
+                @keyframes athr-stake-tile-wiggle {
+                    0%, 100% { transform: translate(calc(-1 * var(--wiggle-distance, .4px)), var(--wiggle-drop, .1625px)) rotate(calc(-1 * var(--wiggle-angle, .315deg))); }
+                    25% { transform: translate(0, calc(-1 * var(--wiggle-lift, .25px))) rotate(0deg); }
+                    50% { transform: translate(var(--wiggle-distance, .4px), var(--wiggle-drop, .1625px)) rotate(var(--wiggle-angle, .315deg)); }
+                    75% { transform: translate(0, var(--wiggle-lift, .25px)) rotate(0deg); }
+                }
+                .wiggle-layer.athr-wiggle-once {
+                    transform-origin: 50% center;
+                    animation-name: athr-stake-tile-wiggle !important;
+                    animation-duration: var(--wiggle-duration, 226ms) !important;
+                    animation-timing-function: ease-in-out !important;
+                    animation-iteration-count: 1 !important;
+                    animation-delay: var(--wiggle-delay, -66ms) !important;
+                    animation-fill-mode: both !important;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .athr-supplied-artwork-wrap, .athr-supplied-cover { animation-duration: .01ms; }
+                    .wiggle-layer.athr-wiggle-once { animation-duration: .01ms !important; animation-delay: 0ms !important; }
+                }
+            `;
+            (document.head || document.documentElement)?.appendChild(style);
+        } catch (_) {}
+    }
+
     function getUniqueGemMarkup(markup) {
+        const gemUrl = getATHRArtworkResourceURL('athrStakeGemSvg');
+        if (gemUrl) {
+            ensureATHRStakeArtworkStyles();
+            const resultGem = /\bresult-gem\b/.test(String(markup));
+            const gemClass = resultGem ? 'gem result-gem' : 'gem clicked-gem';
+            return `<div class="${gemClass} svelte-5u4wia athr-supplied-gem"><div class="animation svelte-5u4wia athr-supplied-artwork-wrap"><img class="athr-supplied-artwork" src="${escapeAssetUrl(gemUrl)}" alt="" aria-hidden="true" draggable="false"></div></div><div class="cover gem svelte-1x9fqyl athr-supplied-cover"></div>`;
+        }
         const clipId = `athr-grid-gem-clip-${++athrGemClipSequence}`;
-        return String(markup).replace(/__lottie_element_13/g, clipId);
+        return String(markup)
+            .replace(/__lottie_element_13/g, clipId)
+            .replace(/svelte-1qwk2y9/g, 'svelte-5u4wia')
+            .replace(/svelte-12ha7jh/g, 'svelte-1x9fqyl');
+    }
+
+    function createATHRMineArtworkHTML(clicked = false) {
+        const mineUrl = getATHRArtworkResourceURL('athrStakeMineSvg');
+        if (!mineUrl) {
+            if (clicked) {
+                return `<div class="mine athr-clicked-mine revealed">${ATHR_MINE_INLINE_SVG}</div><div class="cover mine svelte-1x9fqyl"></div>`;
+            }
+            return String(ATHR_MINE_RESULT_MARKUP).replace(/svelte-12ha7jh/g, 'svelte-1x9fqyl');
+        }
+
+        ensureATHRStakeArtworkStyles();
+        const mineClasses = `mine svelte-1u6oqbc athr-supplied-mine${clicked ? ' athr-clicked-mine revealed' : ''}`;
+        return `<div class="${mineClasses}"><div class="animation svelte-1u6oqbc athr-supplied-artwork-wrap"><img class="athr-supplied-artwork" src="${escapeAssetUrl(mineUrl)}" alt="" aria-hidden="true" draggable="false"></div></div><div class="cover mine svelte-1x9fqyl athr-supplied-cover"></div>`;
     }
 
     function createClickedMineHTML() {
-        // The new capture uses a 220ms entrance, not the legacy GIF explosion.
-        // Retain the supplied bomb vector; internal Lottie data was not exported.
-        return `<div class="mine athr-clicked-mine revealed">${ATHR_MINE_INLINE_SVG}</div><div class="cover mine svelte-12ha7jh"></div>`;
+        // Uses the supplied Lottie-derived vector frame with Stake's 220ms reveal.
+        return createATHRMineArtworkHTML(true);
     }
 
     function createResultMineHTML() {
-        return ATHR_MINE_RESULT_MARKUP;
+        return createATHRMineArtworkHTML(false);
     }
 
     function createBetModalResultMineHTML(isRevealed = false) {
         // Native capture 2026-09-06: 56.5625px tile, 39.5938px wrapper,
         // background-size 70%, opacity .3. Final image box is 49% of tile.
+        const mineUrl = getATHRArtworkResourceURL('athrStakeMineSvg');
+        if (mineUrl) {
+            ensureATHRStakeArtworkStyles();
+            return `<div class="mine athr-modal-result-mine${isRevealed ? ' revealed' : ''}" style="position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;visibility:visible!important;opacity:${isRevealed ? 1 : .3}!important;transform:scale(.7)!important;transform-origin:50% 50%!important;animation:none!important;transition:none!important;background:none!important;pointer-events:none!important;"><img class="athr-supplied-artwork" src="${escapeAssetUrl(mineUrl)}" alt="" aria-hidden="true" style="position:absolute!important;left:15%!important;top:15%!important;width:70%!important;height:70%!important;max-width:none!important;max-height:none!important;margin:0!important;display:block!important;visibility:visible!important;opacity:1!important;transform:none!important;animation:none!important;"></div>`;
+        }
         const svg = ATHR_MINE_INLINE_SVG.replace('<svg ', '<svg style="position:absolute!important;left:15%!important;top:15%!important;width:70%!important;height:70%!important;max-width:none!important;max-height:none!important;margin:0!important;display:block!important;visibility:visible!important;opacity:1!important;transform:none!important;animation:none!important;" ');
         return `<div class="mine athr-modal-result-mine${isRevealed ? ' revealed' : ''}" style="position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;visibility:visible!important;opacity:${isRevealed ? 1 : .3}!important;transform:scale(.7)!important;transform-origin:50% 50%!important;animation:none!important;transition:none!important;background:none!important;pointer-events:none!important;">${svg}</div>`;
     }
@@ -16572,7 +16799,15 @@
         }
 
         const mine = tile?.querySelector?.(':scope > .mine:not(.cover)');
-        if (!mine || mine.querySelector('svg') || typeof Image !== 'function') return;
+        if (!mine) return;
+        const suppliedImage = mine.querySelector('img.athr-supplied-artwork');
+        if (suppliedImage) {
+            suppliedImage.addEventListener('error', () => {
+                mine.innerHTML = ATHR_MINE_INLINE_SVG;
+            }, { once: true });
+            return;
+        }
+        if (mine.querySelector('svg') || typeof Image !== 'function') return;
         const background = mine.style.backgroundImage || '';
         const source = background.match(/url\(["']?(.*?)["']?\)/i)?.[1]
             || athrMineSvgUrl
