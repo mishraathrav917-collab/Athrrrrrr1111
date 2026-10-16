@@ -1,0 +1,50 @@
+@keyframes svelte-5u4wia-scale-up { 
+  0% { opacity: 0; transform: scale(0.4); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animation.svelte-5u4wia { animation: 0.22s cubic-bezier(0.22, 1, 0.36, 1) 0s 1 normal both running svelte-5u4wia-scale-up; position: absolute; inset: 15%; }
+
+.animation.svelte-5u4wia { inset: 8%; }
+
+@keyframes svelte-1u6oqbc-scale-up { 
+  0% { opacity: 0; transform: scale(0.4); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animation.svelte-1u6oqbc { animation: svelte-1u6oqbc-scale-up var(--duration) cubic-bezier(.22, 1, .36, 1) both; position: absolute; inset: 0px; }
+
+@keyframes svelte-1x9fqyl-fetching { 
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes svelte-1x9fqyl-reveal { 
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.72); }
+}
+
+@keyframes svelte-1x9fqyl-hide { 
+  0% { opacity: 0; transform: scale(0); }
+}
+
+@keyframes svelte-1x9fqyl-wiggle { 
+  0%, 100% { transform: translate(calc(-1 * var(--wiggle-distance)), var(--wiggle-drop)) rotate(calc(-1 * var(--wiggle-angle))); }
+  25% { transform: translate(0, calc(-1 * var(--wiggle-lift))) rotate(0deg); }
+  50% { transform: translate(var(--wiggle-distance), var(--wiggle-drop)) rotate(var(--wiggle-angle)); }
+  75% { transform: translate(0, var(--wiggle-lift)) rotate(0deg); }
+}
+
+.wiggle-layer.wiggling.svelte-1x9fqyl { transform-origin: 50% center; animation-duration: ; animation-timing-function: ; animation-iteration-count: ; animation-direction: ; animation-fill-mode: ; animation-play-state: ; animation-name: ; animation-timeline: ; animation-range-start: ; animation-range-end: ; animation-delay: var(--wiggle-delay); }
+
+.wiggle-layer.wiggling.svelte-1x9fqyl { animation: auto ease 0s 1 normal none running none; }
+
+.cover.svelte-1x9fqyl { border-radius: var(--edge-radius-md); transition-duration: var(--duration); transition-property: transform; animation-fill-mode: forwards; position: absolute; inset: 0px; }
+
+.cover.svelte-1x9fqyl .tile-bottom:where(.svelte-1x9fqyl), .cover.svelte-1x9fqyl .tile-top:where(.svelte-1x9fqyl) { border-radius: var(--edge-radius-md); transition-duration: var(--duration); transition-property: background-color; position: absolute; inset: 0px; }
+
+.cover.idle.svelte-1x9fqyl { animation-name: svelte-1x9fqyl-hide; animation-duration: var(--duration); animation-timing-function: cubic-bezier(0.87, -0.41, 0.19, 1.44); }
+
+.cover.fetching.svelte-1x9fqyl { animation: svelte-1x9fqyl-fetching var(--fetch-duration) infinite; }
+
+.cover.gem.svelte-1x9fqyl, .cover.mine.svelte-1x9fqyl { opacity: 0; animation: svelte-1x9fqyl-reveal var(--reveal-duration) cubic-bezier(.4, 0, 1, 1) forwards; }
