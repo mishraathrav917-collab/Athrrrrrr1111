@@ -1,0 +1,29 @@
+{
+  "page": "https://stake.ac/casino/games/mines",
+  "when": "2026-10-07T16:35:07.802Z",
+  "animationNames": [
+    "svelte-1x9fqyl-hide",
+    "svelte-1x9fqyl-fetching",
+    "svelte-5u4wia-scale-up",
+    "svelte-1u6oqbc-scale-up",
+    "svelte-1x9fqyl-reveal",
+    "svelte-1x9fqyl-wiggle"
+  ],
+  "blockedByCors": [],
+  "files": [
+    "sounds/decoded-2193-c7f32c87.mp3",
+    "sounds/decoded-13254-dadc6691.webm",
+    "sounds/decoded-13243-2e3f52f7.webm",
+    "sounds/decoded-16978-d18d9fdd.webm",
+    "sounds/decoded-16785-8db69a25.webm",
+    "sounds/decoded-18169-6045884f.webm",
+    "sounds/decoded-16982-97ba3108.webm",
+    "sounds/decoded-2925-5d62d60c.mp3",
+    "sounds/decoded-15725-8da2cbb9.mp3",
+    "other/gem.JGeVl7-s.lottie",
+    "other/mine.NZDJIy5D.lottie",
+    "svg/gem.Cu7BpPNc.svg",
+    "animations/keyframes-and-rules.css",
+    "animations/waapi.json"
+  ]
+}
